@@ -1,10 +1,10 @@
-var express = require("express")
-require('dotenv').config();
+var express = require("express");
+require("dotenv").config();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 let logger = require("morgan");
 var app = express();
-const server = require('http').createServer(app);
+const server = require("http").createServer(app);
 
 const userRoutes = require("./api/routes/user");
 const eventRoutes = require("./api/routes/event");
@@ -15,23 +15,27 @@ const favoriteRoutes = require("./api/routes/favorite");
 
 var cors = require("cors");
 app.use(express.json({ limit: "50mb" }));
-app.use(cors({
-  origin: '*'
-}));
+app.use(
+  cors({
+    origin: "*",
+  })
+);
 
 //Body Parser middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json({ limit: "1000kb" }));
 app.use(logger("dev"));
 
-const db = process.env.MONGODB_URI
+const db = process.env.MONGODB_URI;
 //connect to MongoDB
-mongoose.set('strictQuery', true)
+mongoose.set("strictQuery", true);
 mongoose
   .connect(db, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("MongoDB Connected"))
   .catch((err) => console.log(err));
-
+app.get("/", (req, res) => {
+  res.send("Bunty here");
+});
 app.use("/user", userRoutes);
 app.use("/event", eventRoutes);
 app.use("/rating", ratingRoutes);
