@@ -2,13 +2,15 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
-let nodemailer = require('nodemailer');
-let ejs = require('ejs');
-let moment = require('moment');
+const path = require("path");
+
+let nodemailer = require("nodemailer");
+let ejs = require("ejs");
+let moment = require("moment");
 let { generateCode } = require("../../config/helper");
 const Event = require("../models/favourite");
-require('dotenv').config();
-const baseUrl = process.env.BASE_URL
+require("dotenv").config();
+const baseUrl = process.env.BASE_URL;
 
 const createToken = (payload) =>
   jwt.sign({ payload }, process.env.JWT_SECRET, { expiresIn: "1h" });
@@ -31,7 +33,7 @@ exports.get_user_by_email = (req, res, next) => {
     .then((docs) => {
       res.status(200).json({
         docs,
-        success: true
+        success: true,
       });
     })
     .catch((err) => {
@@ -46,9 +48,9 @@ exports.signup = (req, res, next) => {
   if (!req.body.email || !req.body.password) {
     res.status(200).json({
       success: false,
-      message: "Please provide email and password"
+      message: "Please provide email and password",
     });
-    return
+    return;
   }
   console.log(req.body);
   User.find({ email: req.body.email })
@@ -60,122 +62,179 @@ exports.signup = (req, res, next) => {
             .save()
             .then((result) => {
               const token = createToken(result);
-              res.status(200).json(
-                {
-                  success: true,
-                  message: "Created user successfully",
-                  token
-                }
-              );
+              res.status(200).json({
+                success: true,
+                message: "Created user successfully",
+                token,
+              });
             })
             .catch((err) => {
               console.log(err);
               res.status(500).json({
                 error: err,
-                success: false
+                success: false,
               });
             });
         });
       } else {
         res.status(200).json({
           message: "User already exist",
-          success: false
+          success: false,
         });
       }
     })
     .catch((err) => {
       res.status(500).json({
         error: "Something went wrong",
-        success: false
+        success: false,
       });
     });
 };
 
-exports.resetPassword = (async (req, res) => {
+exports.resetPassword = async (req, res) => {
   console.log("body", req.body);
   const salt = await bcrypt.genSalt(10);
   var newPassword = await bcrypt.hash(req.body.password, salt);
-  const userDetail = await User.find({ email: req.params.email })
-  let email = req.params.email
+  const userDetail = await User.find({ email: req.params.email });
+  let email = req.params.email;
 
   if (!userDetail.length) {
-    res.send({ success: false, message: "user not exist" })
-    return
+    res.send({ success: false, message: "user not exist" });
+    return;
   }
   User.updateOne(
     { email },
     {
-      $set: { password: newPassword }
+      $set: { password: newPassword },
     }
   )
     .then(() => {
       return res.status(200).send({
         success: true,
-        message: "password updated"
-      })
+        message: "password updated",
+      });
     })
     .catch((err) => {
-      console.log('err: ', err);
+      console.log("err: ", err);
       res.status(400).send({
         error: err,
         success: false,
       });
-    })
-})
-
-exports.sendEmailCode = async (req, res, next) => {
-  const newCode = generateCode(5)
-  const newDate = new Date()
-
-  let mailerConfig = {
-    host: "smtp.gmail.com",
-    secureConnection: true,
-    port: 465,
-    secure: true,
-    auth: {
-      user: "eventnextdoorend@gmail.com",
-      pass: "slpqhitbtqsnpneo"
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  };
-  let transporter = nodemailer.createTransport(mailerConfig);
-  ejs.renderFile("./view/signup.ejs", { email: Buffer.from(req.params.email).toString('base64'), code: newCode }, function (err, data) {
-    if (err) {
-      console.log(err);
-    } else {
-      var mainOptions = {
-        from: mailerConfig.auth.user,
-        to: req.params.email,
-        subject: 'Welcome to Event Next Door!',
-        html: data
-      };
-      transporter.sendMail(mainOptions, function (err, info) {
-        if (err) {
-          console.log(err);
-          return res.send({ success: false, error: "Please enter correct email!" })
-        } else {
-          console.log('Message sent: ' + info.response);
-          return res.send({ msg: 'Message sent: ' + info.response, success: true, code: newCode, newDate })
-        }
-      });
-    }
-  })
+    });
 };
 
+// exports.sendEmailCode = async (req, res, next) => {
+//   const newCode = generateCode(5)
+//   const newDate = new Date()
+
+//   let mailerConfig = {
+//     host: "smtp.gmail.com",
+//     secureConnection: true,
+//     port: 465,
+//     secure: true,
+//     auth: {
+//       user: "eventnextdoorend@gmail.com",
+//       pass: "slpqhitbtqsnpneo"
+//     },
+//     tls: {
+//       rejectUnauthorized: false
+//     }
+//   };
+//   let transporter = nodemailer.createTransport(mailerConfig);
+//   ejs.renderFile("./view/signup.ejs", { email: Buffer.from(req.params.email).toString('base64'), code: newCode }, function (err, data) {
+//     if (err) {
+//       console.log(err);
+//     } else {
+//       var mainOptions = {
+//         from: mailerConfig.auth.user,
+//         to: req.params.email,
+//         subject: 'Welcome to Event Next Door!',
+//         html: data
+//       };
+//       transporter.sendMail(mainOptions, function (err, info) {
+//         if (err) {
+//           console.log(err);
+//           return res.send({ success: false, error: "Please enter correct email!" })
+//         } else {
+//           console.log('Message sent: ' + info.response);
+//           return res.send({ msg: 'Message sent: ' + info.response, success: true, code: newCode, newDate })
+//         }
+//       });
+//     }
+//   })
+// };
+let mailerConfig = {
+  host: "smtp.gmail.com",
+  secureConnection: true,
+  port: 465,
+  secure: true,
+  auth: {
+    user: "eventnextdoorend@gmail.com",
+    pass: "slpqhitbtqsnpneo",
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+};
+
+// Function to send email with code
+exports.sendEmailCode = async (req, res, next) => {
+  const newCode = generateCode(5);
+  const newDate = new Date();
+  const transporter = nodemailer.createTransport(mailerConfig);
+
+  // Render the EJS template
+  const templatePath = path.join(__dirname, "../../view/signup.ejs");
+  ejs.renderFile(
+    templatePath,
+    { email: Buffer.from(req.params.email).toString("base64"), code: newCode },
+    (err, data) => {
+      if (err) {
+        console.error("Error rendering EJS template:", err);
+        return res
+          .status(500)
+          .send({ success: false, error: "Template rendering failed!" });
+      }
+
+      // Define mail options
+      const mailOptions = {
+        from: mailerConfig.auth.user,
+        to: req.params.email,
+        subject: "Welcome to Event Next Door!",
+        html: data,
+      };
+
+      // Send the email
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error("Error sending email:", err);
+          return res
+            .status(500)
+            .send({ success: false, error: "Email sending failed!" });
+        }
+
+        console.log("Message sent:", info.response);
+        res.status(200).send({
+          success: true,
+          msg: `Message sent: ${info.response}`,
+          code: newCode,
+          newDate,
+        });
+      });
+    }
+  );
+};
 exports.sendResetPassCode = async (req, res, next) => {
-  console.log(req.params)
+  console.log(req.params);
   let user = await User.findOne({ email: req.params.email });
   if (!user) {
     return res.status(200).send({
       success: false,
       message: "Please enter a valid email address",
     });
-  }
-  else {
-    const newCode = generateCode(5)
-    const newDate = new Date()
+  } else {
+    const newCode = generateCode(5);
+    const newDate = new Date();
     let mailerConfig = {
       host: "smtp.gmail.com",
       secureConnection: true,
@@ -183,36 +242,48 @@ exports.sendResetPassCode = async (req, res, next) => {
       secure: true,
       auth: {
         user: "eventnextdoorend@gmail.com",
-        pass: "slpqhitbtqsnpneo"
+        pass: "slpqhitbtqsnpneo",
       },
       tls: {
-        rejectUnauthorized: false
-      }
+        rejectUnauthorized: false,
+      },
     };
     let transporter = nodemailer.createTransport(mailerConfig);
-    ejs.renderFile("./view/signup.ejs", { email: Buffer.from(req.params.email).toString('base64'), code: newCode }, function (err, data) {
-      if (err) {
-        console.log(err);
-      } else {
-        var mainOptions = {
-          from: mailerConfig.auth.user,
-          to: req.params.email,
-          subject: 'Event Next Door Reset Password',
-          html: data
-        };
-        transporter.sendMail(mainOptions, function (err, info) {
-          if (err) {
-            console.log(err);
-            return res.send({ error: err.message })
-          } else {
-            console.log('Message sent: ' + info.response);
-            return res.send({ msg: 'Message sent: ' + info.response, success: true, code: newCode, newDate })
-          }
-        });
+    ejs.renderFile(
+      "./view/signup.ejs",
+      {
+        email: Buffer.from(req.params.email).toString("base64"),
+        code: newCode,
+      },
+      function (err, data) {
+        if (err) {
+          console.log(err);
+        } else {
+          var mainOptions = {
+            from: mailerConfig.auth.user,
+            to: req.params.email,
+            subject: "Event Next Door Reset Password",
+            html: data,
+          };
+          transporter.sendMail(mainOptions, function (err, info) {
+            if (err) {
+              console.log(err);
+              return res.send({ error: err.message });
+            } else {
+              console.log("Message sent: " + info.response);
+              return res.send({
+                msg: "Message sent: " + info.response,
+                success: true,
+                code: newCode,
+                newDate,
+              });
+            }
+          });
+        }
       }
-    })
+    );
   }
-}
+};
 
 exports.login = (req, res, next) => {
   if (req.body.email && req.body.password) {
@@ -236,10 +307,12 @@ exports.login = (req, res, next) => {
               const token = createToken(result);
               res.status(200).json({ success: true, token });
             } else {
-              res.status(200).json({ success: false, message: "Invalid Email/Password" });
+              res
+                .status(200)
+                .json({ success: false, message: "Invalid Email/Password" });
             }
           }
-        )
+        );
       })
       .catch((err) => {
         console.log(err);
@@ -247,8 +320,7 @@ exports.login = (req, res, next) => {
           error: err,
         });
       });
-  }
-  else {
+  } else {
     res.status(200).json({
       success: false,
       message: "Username and pass required",
@@ -257,17 +329,17 @@ exports.login = (req, res, next) => {
 };
 
 exports.edit_user = (req, res) => {
-  let body = req.body
-  delete body.password
-  delete body.email
+  let body = req.body;
+  delete body.password;
+  delete body.email;
   console.log(body);
   User.updateOne({ _id: req.params.id }, { $set: body })
     .then(async (docs) => {
-      let data = await User.findOne({ _id: req.params.id })
+      let data = await User.findOne({ _id: req.params.id });
       res.status(200).json({
         message: "User edited successfully",
         success: true,
-        user: data
+        user: data,
       });
     })
     .catch((err) => {
@@ -288,10 +360,13 @@ exports.changePassword = (req, res) => {
           if (passwordMatched) {
             bcrypt.compare(req.body.newPassword, response.password, (e, r) => {
               if (e) {
-                res.send({ error: e })
+                res.send({ error: e });
               }
               if (r) {
-                res.send({ success: false, error: "You have already used this password!" })
+                res.send({
+                  success: false,
+                  error: "You have already used this password!",
+                });
               } else {
                 bcrypt.hash(req.body.newPassword, 10, function (err, hash) {
                   User.updateOne(
@@ -310,9 +385,11 @@ exports.changePassword = (req, res) => {
                     });
                 });
               }
-            })
+            });
           } else {
-            res.status(200).json({ success: false, message: "Invalid Old Password!" });
+            res
+              .status(200)
+              .json({ success: false, message: "Invalid Old Password!" });
           }
         }
       );
@@ -328,7 +405,7 @@ exports.delete_user = (req, res) => {
     .then((docs) => {
       res.status(200).json({
         message: "User deleted successfully",
-        success: true
+        success: true,
       });
     })
     .catch((err) => {
