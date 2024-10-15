@@ -133,7 +133,7 @@ exports.resetPassword = async (req, res) => {
 //     port: 465,
 //     secure: true,
 //     auth: {
-//       user: "eventnextdoorend@gmail.com",
+//       user: "nearbyeventlocator@gmail.com",
 //       pass: "slpqhitbtqsnpneo"
 //     },
 //     tls: {
@@ -169,7 +169,7 @@ let mailerConfig = {
   port: 465,
   secure: true,
   auth: {
-    user: "eventnextdoorend@gmail.com",
+    user: "nearbyeventlocator@gmail.com",
     pass: "slpqhitbtqsnpneo",
   },
   tls: {
@@ -241,7 +241,7 @@ exports.sendResetPassCode = async (req, res, next) => {
       port: 465,
       secure: true,
       auth: {
-        user: "eventnextdoorend@gmail.com",
+        user: "nearbyeventlocator@gmail.com",
         pass: "slpqhitbtqsnpneo",
       },
       tls: {
